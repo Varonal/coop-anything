@@ -4584,7 +4584,7 @@
   checked: 2026-10-16
   searched:
   - search GitHub, Nexus, ModDB and Steam via web search, 2026-10-16
-- game: Alan Wake 2 and Control
+- game: Alan Wake 2
   year: 2023
   engine: Northlight
   project: (none found)
@@ -4602,16 +4602,52 @@
   open_source: unknown
   last_activity: unknown
   qa: none
-  notes: Alan Wake 2 has a mod loader and modding docs on GitHub but no multiplayer mod; I found nothing for Control.
-    Remedy's FBC Firebreak is an official co-op game in the Control universe. Reddit could not be searched with
-    my tool.
+  notes: Alan Wake 2 has a mod loader and modding docs on GitHub but no multiplayer mod. Reddit could not be searched
+    with my tool.
   sources:
   - https://github.com/praydog/alan-wake-2-mod-loader
   - https://github.com/Havens-Night/AW2-Modding-Documentation
   - https://www.nexusmods.com/games/alanwake2/mods
-  checked: 2026-10-16
+  checked: '2026-10-16'
   searched:
   - search GitHub, Nexus, ModDB and Steam via web search, 2026-10-16
+- game: Control
+  year: 2019
+  engine: Northlight
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope:
+    story: unknown
+    enemies: unknown
+    world_state: unknown
+    items: unknown
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: 'No co-op or multiplayer mod found for Control (Ultimate Edition is the current PC build). A modding
+    base exists: Control Plugin Loader and Loose Files Loader by reg2k (Nexus), the neat archive tool,
+    control-unpack and NorthlightTools on GitHub, and the OpenAWE engine reimplementation (Control only a
+    stated long-term goal). Northlight gameplay scripting is Lua over a C++ object model. Closed binary, no
+    shipped netcode, so a co-op mod means native DLL hooks plus a from-scratch sync layer. Remedy''s FBC
+    Firebreak is an official co-op game in the Control universe, not a mod of its campaign. Write-up in
+    games/control.'
+  sources:
+  - https://www.nexusmods.com/control/mods/16
+  - https://www.nexusmods.com/control/mods/11
+  - https://github.com/TomEvin/neat
+  - https://github.com/profMagija/control-unpack
+  - https://github.com/GrzybDev/NorthlightTools
+  - https://github.com/OpenAWE-Project/OpenAWE
+  - https://www.remedygames.com/northlight
+  checked: '2026-10-23'
+  searched:
+  - search GitHub, Nexus, ModDB and Steam via web search, 2026-10-23; Reddit only partially, game co-op wish
+    threads only
 - game: 'Sleeping Dogs: Definitive Edition'
   year: 2014
   engine: unknown
