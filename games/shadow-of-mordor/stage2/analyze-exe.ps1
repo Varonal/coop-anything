@@ -33,11 +33,10 @@ $fs.Position = $peOff + 4
 $machine = $br.ReadUInt16()
 $numSections = $br.ReadUInt16()
 $fs.Position = $peOff + 20
-$optMagic = $br.ReadUInt16()
-$fs.Position = $peOff + 24 + 92
+$optMagic = $br.ReadUInt16()          # PE32+ = 0x20B
+$fs.Position = $peOff + 24 + 24       # PE32+ image base is at opt+24
 $imageBase = $br.ReadUInt64()
-$optSize = 0
-$fs.Position = $peOff + 20 + 16
+$fs.Position = $peOff + 20 + 16       # SizeOfOptionalHeader is COFF+16
 $optSize = $br.ReadUInt16()
 $sectOff = $peOff + 24 + $optSize
 $sections = @()
@@ -112,6 +111,73 @@ foreach ($s in $sections) {
     }
 }
 
+
+
+# --- string dump of .rdata/.data: console programs, save paths, net symbols ---
+Write-Host ''
+Write-Host '--- string scan (looking for console programs, save paths, net symbols) ---'
+function Section-Range {
+    param($sections, [string]$name)
+    foreach ($s in $sections) {
+        if ($s.name -eq $name) {
+            return @{ rawPtr = [Convert]::ToInt64($s.rawPtr, 16); rawSize = $s.rawSize }
+        }
+    }
+    return $null
+}
+$stringHits = @()
+foreach ($secName in @('.rdata', '.data')) {
+    $r = Section-Range -sections $sections -name $secName
+    if (-not $r) { continue }
+    $chunk = New-Object byte[] $r.rawSize
+    [Array]::Copy($bytes, $r.rawPtr, $chunk, 0, $r.rawSize)
+    $text = [System.Text.Encoding]::ASCII.GetString($chunk)
+    $patterns = @('Save', 'Load', 'Dump', 'Teleport', 'Faction', 'Quest', 'Console', 'Cheat', 'Game.', 'Player.', 'World.', 'Net', 'Host', 'Client', 'Session', 'wb games', 'WB Games', 'ShadowOfMordor', '.sav', 'Leaderboard', 'Vendetta', 'Nemesis')
+    foreach ($pat in $patterns) {
+        $idx = 0
+        $count = 0
+        while ($count -lt 6) {
+            $i = $text.IndexOf($pat, $idx, [System.StringComparison]::OrdinalIgnoreCase)
+            if ($i -lt 0) { break }
+            $start = [Math]::Max(0, $i - 25)
+            $len = [Math]::Min(100, $text.Length - $start)
+            $frag = $text.Substring($start, $len)
+            $frag = ($frag -replace '[^\x20-\x7E]', '.')
+            $stringHits += ('{0}+0x{1:X}: {2}' -f $secName, ($r.rawPtr + $i), $frag)
+            $count++
+            $idx = $i + $pat.Length
+        }
+    }
+}
+$stringHits | Select-Object -Unique | Out-File (Join-Path $OutDir 'strings-hits.txt') -Encoding utf8
+Write-Host ("{0} context hits written to strings-hits.txt (top lines below)" -f ($stringHits | Select-Object -Unique).Count)
+$stringHits | Select-Object -Unique -First 25 | ForEach-Object { Write-Host ("  " + $_) }
+
+# --- byte-signature scan (V7-derived, informational for V6) ---
+Write-Host ''
+Write-Host '--- byte signature scan (prologues of the V7 functions; V6 counterparts may differ slightly) ---'
+$sigs = @(
+    @{ name = 'RandomFloat (V7: 1B3C6C)';      hex = '48 83 EC 28 0F 28 C8 E8' },
+    @{ name = 'HandleFactionEventAction (V7: 40C304)'; hex = '48 89 5C 24 08 48 89 6C 24 18 48 89 74 24 20 57 41 54 41 55 41 56 41 57 48 83 EC 70 4C 8B FA' },
+    @{ name = 'RollResurrection (V7: 6DBD4C)'; hex = '48 89 5C 24 10 48 89 74 24 20 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 60 48 8B 99 28 02 00 00' },
+    @{ name = 'LookupFactionMember (V7: 18DDCC)'; hex = '8B 52 08 E9 ? ? ? ? 48 8B 49 20' },
+    @{ name = 'RecordName (V7: 18BDB0)';       hex = '48 85 C9 74 18 F6 41 01 02 74 12 48 8B 41 20' }
+)
+$sigReport = @()
+foreach ($sig in $sigs) {
+    $pattern = $sig.hex -split ' ' | ForEach-Object { [Convert]::ToByte($_, 16) }
+    $hits = @()
+    for ($i = 0; $i -le $bytes.Length - $pattern.Count; $i++) {
+        $ok = $true
+        for ($j = 0; $j -lt $pattern.Count; $j++) {
+            if ($pattern[$j] -ne 0x3F -and $bytes[$i + $j] -ne $pattern[$j]) { $ok = $false; break }
+        }
+        if ($ok) { $hits += $i; if ($hits.Count -ge 5) { break } }
+    }
+    $sigReport += [pscustomobject]@{ signature = $sig.name; hits = $hits.Count; offsets = ($hits | ForEach-Object { '0x{0:X}' -f $_ }) }
+    Write-Host ('{0,-45} {1} hit(s) {2}' -f $sig.name, $hits.Count, (($hits | ForEach-Object { '0x{0:X}' -f $_ }) -join ' '))
+}
+$sigReport | ConvertTo-Json -Depth 3 | Out-File (Join-Path $OutDir 'signatures.json') -Encoding utf8
 Write-Host ''
 Write-Host "analysis written to $OutDir"
 Write-Host 'Paste the console output (and markers.json, sections.json) back to the agent.'

@@ -192,3 +192,20 @@ observations have sources, unknowns are not guesses.
 2. Play 10+ minutes on the test copy, save in-game, run
    `stage1\snapshot-saves.ps1 -Compare` again and also check
    `%LOCALAPPDATA%`, `%APPDATA%`, `Documents` for new "WB Games"-like folders.
+
+### Follow-up 3: second analyze-exe run + parser fix (2026-10-23)
+
+- Owner re-ran stage 2: identical hash, markers and entropy (stable). But
+  optMagic still printed 0x00F0 and imageBase 0x100000000000, and the first six
+  "sections" were garbage — my PE parser read the wrong offsets (optMagic at
+  opt+0 would be right, but I read COFF+16=SizeOfOptionalHeader=0xF0 there, and
+  imageBase from PE32 offsets instead of PE32+). Fixed: optMagic at peOff+20,
+  imageBase at peOff+24+24 (PE32+), sections at peOff+24+SizeOfOptionalHeader.
+  Expect 4 real sections (.text/.interpr/.rdata/.data) on re-run.
+- While at it, added to analyze-exe.ps1: a context-string scan of .rdata/.data
+  (Save/Load/Faction/Net/WB Games/.sav etc., written to strings-hits.txt) and a
+  byte-signature scan for the five V7 function prologues (RandomFloat,
+  HandleFactionEventAction, RollResurrection, LookupFactionMember, RecordName),
+  with `?` wildcards, capped at 5 hits each (signatures.json).
+- Owner: please re-run once more after `git pull`; the section table, imageBase
+  and signature hits decide the stage 3 mapping plan.
