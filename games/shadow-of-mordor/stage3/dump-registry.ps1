@@ -67,7 +67,13 @@ $hitRvas = $hitRvas | Sort-Object -Unique
 $anchor = $hitRvas[0]
 Write-Host ("{0} anchor pointer hits, lowest 0x{1:X}" -f $hitRvas.Count, $anchor)
 # align down to 0x40 and walk a window of 64 entries before/after the span
-$spanFirst = [UInt64]([Math]::Floor((([double]$hitRvas[0] - 0x400) / 0x40)) * 0x40)
+# The registry grid is anchored on the hit RVAs themselves: real entries sit at
+# (hit mod 0x40), which is 0x18 on this build. Walking from a 0x40-aligned base
+# steps right past every real entry (that is exactly what happened on the first
+# dumps). Anchor on the lowest hit and walk the stride from there.
+$grid = [UInt64]$hitRvas[0] % 0x40
+$spanFirst = [UInt64]($hitRvas[0] - 0x400)
+$spanFirst = $spanFirst - ($spanFirst % 0x40) + $grid   # same residue as the hits
 $spanLast = [UInt64]($hitRvas[-1] + 0x400)
 
 $entries = @()

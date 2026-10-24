@@ -301,3 +301,16 @@ observations have sources, unknowns are not guesses.
 - v3 of dump-registry.ps1 shipped with a trailing orphan `'` line left over from
   my string replacement (parser error before anything ran). Removed. No other
   stray characters; quote balance checked. Re-run needed.
+
+### Follow-up 9: grid alignment bug — the walk stepped past every real entry (2026-10-23)
+
+- Owner's third dump: 40 named entries but ZERO of the 12 confirmed console
+  programs, and the detailed block empty. Root cause: my walk started at a
+  0x40-ALIGNED address, but the real entries sit at residue 0x18 mod 0x40
+  (0x17F9E58, 0x17F9E98, ...). The grid stepped over every real entry and
+  collected only 0x40-aligned noise (fff, ctexscale, rldRange.minX...).
+- Fix: anchor the grid on the lowest stage-2 hit itself (same residue class),
+  then walk ±0x400 at 0x40 stride. Also documented: the residue is 0x18 for
+  build 7348332 — the registry array is not 0x40-aligned in .data.
+- Re-run: the detailed block should now list all 12 confirmed programs with
+  their 8 qwords, and the entry list should be real console programs.
