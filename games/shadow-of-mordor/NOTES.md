@@ -98,3 +98,28 @@ observations have sources, unknowns are not guesses.
   and fixed the DLC-list search that looked beside the install instead of beside the
   manifest. Owner note: their PowerShell also showed that `cd C:\Users\Kesham DELOR\...`
   needs quotes (space in the path) — not a script bug.
+
+## Stage 1 owner run: SUCCESS (2026-10-23)
+
+### Observations (owner-reported, values not yet pasted)
+
+- All stage 1 steps ran to completion on the owner's PC: identity, test copy,
+  before-snapshot, first launch of the test copy, after-run `-Compare` reported
+  "no changes" (isolation proven for one session).
+- Exact identity values (exe SHA-256, build id, DLC list, save folder paths) were
+  not pasted into the chat yet — ask for them before anchoring any write-up
+  (AGENTS.md rule 5) and paste them here when received.
+
+### Derived
+
+- The workspace is safe to instrument: the test copy ran and wrote nothing
+  outside itself.
+- Stage 2 (static analysis kit, `stage2/analyze-exe.ps1`) is written and pushed;
+  next owner action is to run it and paste the output.
+
+### Unknowns
+
+- Whether the test copy launched via the exe directly or through Steam (the
+  owner was told to double-click the exe; if Steam relaunched the real install,
+  the -Compare would have caught writes, and it did not, so either way the
+  isolation held).
