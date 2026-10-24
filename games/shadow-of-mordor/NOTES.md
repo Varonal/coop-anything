@@ -72,3 +72,17 @@ observations have sources, unknowns are not guesses.
 
 - Confirm the install they play (Steam app 241930 GOTY?), and permission to copy it
   into a test folder (AGENTS.md rule 2) before any instrumentation.
+
+## Session follow-up: identity.ps1 failed on first owner run (2026-10-23)
+
+### Observation
+
+- Owner ran `.\identity.ps1` in Windows PowerShell 5.1 and got
+  `Le terme «param» n'est pas reconnu` at line 5: the `param()` block was placed
+  after `$ErrorActionPreference = 'Stop'`, which PowerShell rejects (`param()` must
+  precede all executable statements; only comments may come first).
+
+### Fix
+
+- Moved `param()` to the top of all three stage1 scripts (identity, make-test-copy,
+  snapshot-saves), committed on `game/shadow-of-mordor`. Not yet re-run by the owner.

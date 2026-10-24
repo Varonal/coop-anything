@@ -2,11 +2,11 @@
 # only READ. Per playbook/methods.md: never work on the owner's install; a copy at
 # another path does not isolate saves (that is snapshot-saves.ps1's job to prove).
 # Also records a file manifest of the copy so in-place edits are detectable.
-$ErrorActionPreference = 'Stop'
 param(
     [string]$InstallPath = '',
     [string]$Dest = (Join-Path $env:LOCALAPPDATA 'Temp\som-test-a')
 )
+$ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 

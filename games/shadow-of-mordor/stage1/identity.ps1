@@ -1,10 +1,10 @@
 # Stage 1: record the game's identity (store, build, exe SHA-256).
 # Read-only against the install. Writes identity.json next to this script.
 # From AGENTS.md rule 5: a write-up is only followed if it matches this identity.
-$ErrorActionPreference = 'Stop'
 param(
     [string]$InstallPath = ''
 )
+$ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Find-Install {

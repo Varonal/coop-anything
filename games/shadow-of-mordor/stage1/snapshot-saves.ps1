@@ -3,10 +3,10 @@
 # From playbook/methods.md (Shadow of War pitfall): the game saves frequently and
 # Steam's remote-storage service (steam.exe) writes into Steam userdata even with
 # cloud off; back up AND hash before the first launch, compare after every run.
-$ErrorActionPreference = 'Stop'
 param(
     [switch]$Compare
 )
+$ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 
