@@ -11,11 +11,24 @@ function Find-Install {
     param([string]$Hint)
     if ($Hint -and (Test-Path $Hint)) { return (Resolve-Path $Hint).Path }
     $candidates = @(
-        Join-Path $env:ProgramFiles 'Steam\steamapps\common\ShadowOfMordor',
-        Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\ShadowOfMordor',
-        Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\Middle-earth Shadow of Mordor',
-        Join-Path $env:ProgramFiles 'Steam\steamapps\common\Middle-earth Shadow of Mordor'
+        (Join-Path $env:ProgramFiles 'Steam\steamapps\common\ShadowOfMordor'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\ShadowOfMordor'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Steam\steamapps\common\Middle-earth Shadow of Mordor'),
+        (Join-Path $env:ProgramFiles 'Steam\steamapps\common\Middle-earth Shadow of Mordor')
     )
+    # also scan every Steam library declared in libraryfolders.vdf
+    foreach ($root in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+        $vdf = Join-Path $root 'Steam\steamapps\libraryfolders.vdf'
+        if (Test-Path $vdf) {
+            foreach ($m in (Select-String -Path $vdf -Pattern '"path"\s+"([^"]+)"' -AllMatches).Matches) {
+                $p = $m.Groups[1].Value -replace '\\\\', '\'
+                $candidates += @(
+                    (Join-Path $p 'steamapps\common\ShadowOfMordor'),
+                    (Join-Path $p 'steamapps\common\Middle-earth Shadow of Mordor')
+                )
+            }
+        }
+    }
     foreach ($c in $candidates) { if (Test-Path $c) { return (Resolve-Path $c).Path } }
     # ask Steam's library folders.vdf
     throw "Install not found. Re-run with: identity.ps1 -InstallPath <path to the game folder>"
@@ -44,20 +57,42 @@ Write-Host "FileVersion: $version  ProductVersion: $product"
 Write-Host "OS: $([Environment]::OSVersion.VersionString)  x64: $([Environment]::Is64BitOperatingSystem)"
 
 # Steam build id from the appmanifest beside the library
-$manifest = Get-ChildItem -Path (Split-Path -Parent (Split-Path -Parent $install)) -Filter "appmanifest_241930.acf" -ErrorAction SilentlyContinue | Select-Object -First 1
+$libRoot = Split-Path -Parent (Split-Path -Parent $install)   # <library>\steamapps\common\X -> <library>\steamapps
+$manifest = Get-ChildItem -Path $libRoot -Filter "appmanifest_241930.acf" -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $manifest) {
+    # game folder may not be named as expected: search every Steam library
+    foreach ($root in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+        $vdf = Join-Path $root 'Steam\steamapps\libraryfolders.vdf'
+        if (Test-Path $vdf) {
+            foreach ($m in (Select-String -Path $vdf -Pattern '"path"\s+"([^"]+)"' -AllMatches).Matches) {
+                $p = $m.Groups[1].Value -replace '\\\\', '\'
+                $f = Join-Path $p 'steamapps\appmanifest_241930.acf'
+                if (Test-Path $f) { $manifest = Get-Item $f; break }
+            }
+        }
+        if ($manifest) { break }
+    }
+}
 $buildId = $null
 if ($manifest) {
-    $buildId = (Select-String -Path $manifest.FullName -Pattern '"buildid"\s+"(\d+)"').Matches[0].Groups[1].Value
-    Write-Host "Steam buildid: $buildId (from $($manifest.Name))"
+    $m = (Select-String -Path $manifest.FullName -Pattern '"buildid"\s+"(\d+)"')
+    if ($m -and $m.Matches.Count -gt 0) {
+        $buildId = $m.Matches[0].Groups[1].Value
+        Write-Host "Steam buildid: $buildId (from $($manifest.Name))"
+    } else {
+        Write-Host 'Steam buildid: manifest found but no buildid line - record it by hand from steamdb.info/app/241930'
+    }
 } else {
     Write-Host "Steam buildid: not found (appmanifest_241930.acf missing) - record it by hand from steamdb.info/app/241930"
 }
 
 # DLC manifests (GOTY vs base) - content config decides the target build
 $dlcs = @()
-foreach ($m in (Get-ChildItem -Path (Split-Path -Parent (Split-Path -Parent $install)) -Filter "appmanifest_*.acf" -ErrorAction SilentlyContinue)) {
-    if ($m.Name -match 'appmanifest_(2\d{5})\.acf' -and $m.Name -notin @('appmanifest_241930.acf')) {
-        $dlcs += $m.BaseName -replace 'appmanifest_', ''
+if ($manifest) {
+    foreach ($f in (Get-ChildItem -Path (Split-Path -Parent $manifest.FullName) -Filter "appmanifest_*.acf" -ErrorAction SilentlyContinue)) {
+        if ($f.Name -match 'appmanifest_(2\d{5})\.acf' -and $f.Name -ne 'appmanifest_241930.acf') {
+            $dlcs += ($f.BaseName -replace 'appmanifest_', '')
+        }
     }
 }
 Write-Host "other app manifests present (DLC family): $($dlcs -join ', ')"

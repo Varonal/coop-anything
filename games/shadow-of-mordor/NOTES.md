@@ -86,3 +86,15 @@ observations have sources, unknowns are not guesses.
 
 - Moved `param()` to the top of all three stage1 scripts (identity, make-test-copy,
   snapshot-saves), committed on `game/shadow-of-mordor`. Not yet re-run by the owner.
+
+### Follow-up 2: second owner-run failure and fix (2026-10-23)
+
+- `.\identity.ps1` failed with `Join-Path: Impossible de convertir «System.Object[]»
+  en type «System.String»`: inside a PowerShell array literal, `Join-Path a b,` binds
+  the comma to Join-Path's positional parameters instead of separating array items.
+  All array items are now parenthesized: `@( (Join-Path ...), ... )`.
+- While fixing: added Steam multi-library discovery (libraryfolders.vdf) for both the
+  install path and appmanifest_241930.acf, guarded the buildid regex against no-match,
+  and fixed the DLC-list search that looked beside the install instead of beside the
+  manifest. Owner note: their PowerShell also showed that `cd C:\Users\Kesham DELOR\...`
+  needs quotes (space in the path) — not a script bug.
