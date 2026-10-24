@@ -333,3 +333,57 @@ observations have sources, unknowns are not guesses.
   System.Void` — I piped `[void]$out.ToString()` into Out-File. Fixed (drop the
   [void] cast; the AppendLine casts are fine, only the piped one was invalid).
 - Re-run needed; no output was produced.
+
+### Follow-up 12: ROOT CAUSE FOUND — section table read 240 bytes early (2026-10-23)
+
+The anchor hexdump cracked it. Every garbage string resolved through a
+phantom section covering RVA 0x2FB10-0x1B942F0, and the section list showed
+SizeOfOptionalHeader=0xF0 read at the wrong place. The real layout: COFF
+header ends at peOff+20 where the OPTIONAL header starts; SizeOfOptionalHeader
+is a COFF field at peOff+16 (before the optional header), not inside it. I
+read it at peOff+36, which is SizeOfUninitializedData... actually the raw value
+0xF0 (=240, the true optional header size, coincidentally the value I wanted)
+was picked up from the wrong field and my section table started at
+peOff+24+0xF0 in FILE terms but the entries I parsed as sections 1-6 were the
+optional header's own data directory entries. All .rdata string resolutions
+were therefore wrong; the .text flags were computed against the real .text
+section parsed correctly at index 7, so the [.text] handler addresses in the
+hexdump are VALID.
+
+**Console registry entry layout, V6 build 7348332 (0x40 bytes, from the
+anchor hexdumps, entry base = name pointer hit):**
+
+| offset | content (Faction.SetTarget example 0x17FB278) |
+|---|---|
+| +0x00 | name string VA (0x1413C0BB0) |
+| +0x08 | help/description string VA (adjacent in .rdata, name+0x10) |
+| +0x10 | source file string VA (0x1413C0780, constant per category) |
+| +0x18 | line number (0x117F = 4479) |
+| +0x20 | FLink list pointer (self, empty) |
+| +0x28 | BLink list pointer (self, empty) |
+| +0x30 | **handler function VA** |
+| +0x38 | type/flags constant (0x1413BAFD0) |
+
+**Handler addresses (V6 Steam build 7348332, exe SHA-256 F5D72578...455):**
+
+| console program | handler VA |
+|---|---|
+| Player.GetPos | 0x1403F26B0 |
+| Player.SetOrientation | 0x1403F88D0 |
+| NextSpawnPoint | 0x1403F6FD0 |
+| PrevSpawnPoint | 0x1403F7190 |
+| Teleport | 0x1403F41A0 |
+| Player.Save | 0x1403F41F0 |
+| Report.Memory | 0x1408B2190 |
+| Game.SaveSlot.Show | 0x140438300 |
+| Camera.DumpInfo | 0x1405CB50 |
+| PlayerUI.DumpMovieTree | 0x140462550 |
+| Faction.SetTarget | 0x140462770 |
+| Interrogation.Perform | 0x140462890 |
+
+- Name and help strings are adjacent in .rdata (name+0x10) — verified on
+  Player.Save (0x1413BB9A0/+0x10) and consistent everywhere in the dump.
+- The second Teleport pointer (0x18356C0) is pathEngine-region noise, ruled out.
+- optSize offset fixed in all three scripts (peOff+16). Re-running
+  dump-registry.ps1 should now produce a clean, fully-named registry list with
+  correct strings; its output is the next documentation artifact.

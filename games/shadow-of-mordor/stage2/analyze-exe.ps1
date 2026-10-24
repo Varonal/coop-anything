@@ -36,7 +36,7 @@ $fs.Position = $peOff + 20
 $optMagic = $br.ReadUInt16()          # PE32+ = 0x20B
 $fs.Position = $peOff + 24 + 24       # PE32+ image base is at opt+24
 $imageBase = $br.ReadUInt64()
-$fs.Position = $peOff + 20 + 16       # SizeOfOptionalHeader is COFF+16
+$fs.Position = $peOff + 16           # SizeOfOptionalHeader is the COFF field at peOff+16
 $optSize = $br.ReadUInt16()
 $sectOff = $peOff + 24 + $optSize
 $sections = @()

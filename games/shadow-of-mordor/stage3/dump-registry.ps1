@@ -16,7 +16,7 @@ New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 # PE basics
 $bytes = [System.IO.File]::ReadAllBytes($ExePath)
 $peOff = [BitConverter]::ToInt32($bytes, 0x3C)
-$optSize = [BitConverter]::ToUInt16($bytes, $peOff + 20 + 16)
+$optSize = [BitConverter]::ToUInt16($bytes, $peOff + 16)
 $numSections = [BitConverter]::ToUInt16($bytes, $peOff + 6)
 $sectOff = $peOff + 24 + $optSize
 $sections = @()
