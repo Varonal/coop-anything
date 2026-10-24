@@ -82,6 +82,6 @@ foreach ($e in $reg) {
     }
 }
 $outFile = Join-Path $OutDir 'anchor-hexdump.txt'
-[void]$out.ToString() | Out-File $outFile -Encoding utf8
+$out.ToString() | Out-File $outFile -Encoding utf8
 Write-Host $out.ToString()
 Write-Host "written to $outFile"

@@ -326,3 +326,10 @@ observations have sources, unknowns are not guesses.
   No interpretation to get wrong; the entry layout is read off the bytes.
 - Next owner action: git pull, run stage3\hexdump-anchors.ps1, paste the whole
   output (it also lands in stage3\analysis\anchor-hexdump.txt).
+
+### Follow-up 11: hexdump script — piping [void] throws (2026-10-23)
+
+- hexdump-anchors.ps1 crashed at start: `Le type de l'argument ne peut pas être
+  System.Void` — I piped `[void]$out.ToString()` into Out-File. Fixed (drop the
+  [void] cast; the AppendLine casts are fine, only the piped one was invalid).
+- Re-run needed; no output was produced.
