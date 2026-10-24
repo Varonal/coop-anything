@@ -128,4 +128,3 @@ foreach ($e in $entries) {
 Write-Host ''
 Write-Host "full dump: $OutDir\registry-entries.json"
 Write-Host 'In the detailed block, the qword offset flagged TEXT in every confirmed entry is the handler pointer offset.'
-'

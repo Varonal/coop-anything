@@ -295,3 +295,9 @@ observations have sources, unknowns are not guesses.
   read directly instead of guessed.
 - Re-run: expect a small clean list (~tens of real console programs, including
   Faction.SetTarget etc.) + the detailed 12-entry block.
+
+### Follow-up 8: stray quote parse error, removed (2026-10-23)
+
+- v3 of dump-registry.ps1 shipped with a trailing orphan `'` line left over from
+  my string replacement (parser error before anything ran). Removed. No other
+  stray characters; quote balance checked. Re-run needed.
