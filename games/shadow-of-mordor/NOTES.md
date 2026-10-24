@@ -387,3 +387,32 @@ anchor hexdumps, entry base = name pointer hit):**
 - optSize offset fixed in all three scripts (peOff+16). Re-running
   dump-registry.ps1 should now produce a clean, fully-named registry list with
   correct strings; its output is the next documentation artifact.
+
+## Stage 4: log-only probe written (2026-10-23)
+
+### What
+
+- stage4/bink2coop.c: proxy DLL, all Bink exports forwarded via generated .def
+  to bink2w64_orig.dll; a startup thread walks the registry at the stage-3 RVAs
+  in the game's memory and writes som-coop.log (names, help, source lines,
+  handler VAs). Read-only: no hooks, no pointer writes.
+- stage4/build.ps1: llvm-mingw (winget MartinStorsjo.LLVM-MinGW.MSVCRT, the
+  Divinity-2-validated toolchain), export parsing and .def generation in
+  PowerShell, x64 sanity check, SHA-256 of the product.
+- stage4/install-test.ps1: save snapshot, proxy install into the TEST copy,
+  launch, wait, print log head; reminds to run -Compare after closing.
+
+### Owner actions
+
+1. Approve the winget install of llvm-mingw (one UAC prompt), run
+   `winget install MartinStorsjo.LLVM-MinGW.MSVCRT`.
+2. stage4\build.ps1 then stage4\install-test.ps1; paste build output, log head
+   and the -Compare result.
+
+### Unknowns
+
+- Whether the game loads bink2w64.dll from its x64 folder before reaching the
+  menu fast enough for the 45 s wait (the log is written at DLL attach, so it
+  exists as soon as the process starts videos).
+- The registry range end (REG_LAST_RVA 0x17FC000 is an estimate; the log will
+  show where valid entries stop, and that value gets pinned then).
