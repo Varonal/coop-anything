@@ -276,3 +276,22 @@ observations have sources, unknowns are not guesses.
   Root cause: [Math]::Floor returns a double; PowerShell 5.1's `{0:X}` rejects
   doubles. Fixed: $spanFirst/$spanLast/$rva cast to [UInt64], $fileOff to [long].
 - Re-run needed; no data lost (crash before any output write).
+
+### Follow-up 7: dump-registry second run — noise, filter hardened (2026-10-23)
+
+- Owner's run "worked" but the output was 90% noise: my Read-CStr accepted any
+  2+ printable chars as a "name", so CRT vtables, pathfinder strings (";H",
+  "A;C", "$8,4", "ctexscale", HLSL compiler strings...) flooded the list past
+  the real console zone (0x17F9E58-0x17FB2B8, truncated out of the paste).
+  Valuable finds in the noise anyway: iPathEngine strings (pathfinding middleware
+  "prevalidation", "worldRange"), HLSL Shader Compiler 9.30, OpenSSL-style ASN1
+  error strings ("ode password too big", "ASN1 bad key data") — the game links
+  crypto for its (dead) online features. The second Teleport reference zone
+  (0x18356C0) is inside this pathEngine/CRT region: it was a coincidental
+  pointer, not a second registry.
+- Fix: strict console-name regex (identifier chars only, 3-40 chars, optional
+  dotted segments) + a detailed block that prints all 8 qwords of the 12
+  confirmed entries so the handler offset (the TEXT qword common to all) is
+  read directly instead of guessed.
+- Re-run: expect a small clean list (~tens of real console programs, including
+  Faction.SetTarget etc.) + the detailed 12-entry block.

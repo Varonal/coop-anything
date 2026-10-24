@@ -77,7 +77,12 @@ for ([UInt64]$rva = $spanFirst; $rva -le $spanLast; $rva += 0x40) {
     # qword 0 = name pointer (verified by the stage-2 hits)
     $nameVa = [BitConverter]::ToUInt64($bytes, $fileOff)
     $name = $null
-    if ($nameVa -gt $imageBase) { $name = Read-CStr (Va-ToFile $nameVa) }
+    if ($nameVa -gt $imageBase) {
+        $raw = Read-CStr (Va-ToFile $nameVa)
+        # strict console-name shape: identifier chars only, 3-40 chars,
+        # starts with a letter; kills CRT/vtable noise (";H", "A;C", "$8,4")
+        if ($raw -and $raw -match '^[A-Za-z][A-Za-z0-9]{2,}(\.[A-Za-z0-9]+)*$' -and $raw.Length -le 40) { $name = $raw }
+    }
     if (-not $name) { continue }
     # dump all qwords; flag those pointing into .text or .rdata
     $qwords = @()
@@ -99,11 +104,28 @@ for ([UInt64]$rva = $spanFirst; $rva -le $spanLast; $rva += 0x40) {
     }
 }
 
-Write-Host ("{0} named entries dumped" -f $entries.Count)
+Write-Host ("{0} named entries dumped (strict name filter)" -f $entries.Count)
 $entries | ConvertTo-Json -Depth 5 | Out-File (Join-Path $OutDir 'registry-entries.json') -Encoding utf8
+
+# Detailed view of the 12 stage-2-confirmed console programs: show every qword
+# so the handler offset (the qword that points into .text in ALL of them) is
+# unambiguous.
+$known = @('Player.Save','Player.GetPos','Player.SetOrientation','Teleport','NextSpawnPoint','PrevSpawnPoint','Game.SaveSlot.Show','Report.Memory','Camera.DumpInfo','Faction.SetTarget','Interrogation.Perform','PlayerUI.DumpMovieTree')
+Write-Host ''
+Write-Host '--- detailed: stage-2 confirmed entries ---'
 foreach ($e in $entries) {
-    Write-Host ("{0,-12} {1,-28} text ptrs: {2}" -f $e.entry_rva, $e.name, ($e.text_ptrs -join ' '))
+    if ($known -contains $e.name) {
+        Write-Host ("{0}  {1}" -f $e.entry_rva, $e.name)
+        foreach ($q in $e.qwords) { Write-Host ("    {0}  {1}  {2}" -f $q.off, $q.va, $q.kind) }
+    }
+}
+
+Write-Host ''
+Write-Host '--- all named entries (one line each) ---'
+foreach ($e in $entries) {
+    Write-Host ("{0,-12} {1,-40} text ptrs: {2}" -f $e.entry_rva, $e.name, ($e.text_ptrs -join ' '))
 }
 Write-Host ''
 Write-Host "full dump: $OutDir\registry-entries.json"
-Write-Host 'The +0x? qwords flagged TEXT are the console handler function addresses (stage 3 hook targets).'
+Write-Host 'In the detailed block, the qword offset flagged TEXT in every confirmed entry is the handler pointer offset.'
+'
