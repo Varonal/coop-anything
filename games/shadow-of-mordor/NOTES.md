@@ -245,3 +245,25 @@ observations have sources, unknowns are not guesses.
 
 - git pull, re-run stage2\analyze-exe.ps1, paste the "console registry hunt"
   section and re-run signature scan (fixed wildcards).
+
+### Follow-up 5: console registry FOUND (2026-10-23)
+
+- Owner's fourth run delivered the registry: pointer hits for all 12 probed
+  console names, at a **0x40-byte stride** in .data (entry +0 = name pointer):
+  Player.GetPos 0x17F9E58, Player.SetOrientation 0x17F9E98, NextSpawnPoint
+  0x17F9F18, PrevSpawnPoint 0x17F9F58, Teleport 0x17F9F98, Player.Save
+  0x17FA0D8, Report.Memory 0x17FA5C8, Game.SaveSlot.Show 0x17FACF8,
+  Camera.DumpInfo 0x17FAE88, PlayerUI.DumpMovieTree 0x17FB178,
+  Faction.SetTarget 0x17FB278, Interrogation.Perform 0x17FB2B8.
+  (Teleport also hit 0x18356C0 — a second reference, likely a second registry
+  or a copy; dump both neighborhoods.)
+- Entry size 0x40 matches V7's registry entry layout scale; name ptr at +0
+  verified by construction. Handler pointers: to be dumped (stage 3).
+- V7 prologue signatures: all five 0 hits — V6 prologues differ; the console
+  handlers are now the anchor instead.
+- Stage 3 script pushed (stage3/dump-registry.ps1): walks the registry window at
+  0x40 stride, resolves names, flags qwords into .text = handler candidates.
+
+### Next owner action
+
+- git pull, run stage3\dump-registry.ps1, paste the entry table.
