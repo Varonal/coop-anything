@@ -314,3 +314,15 @@ observations have sources, unknowns are not guesses.
   build 7348332 — the registry array is not 0x40-aligned in .data.
 - Re-run: the detailed block should now list all 12 confirmed programs with
   their 8 qwords, and the entry list should be real console programs.
+
+### Follow-up 10: grid fix was correct but still no named entries — go raw (2026-10-23)
+
+- Fourth dump with the residue-anchored grid: only 7 "entries", still ZERO of
+  the 12 confirmed programs. The grid now passes through their exact addresses,
+  so the failure is in my interpretation layer (name resolution or filter), not
+  the walk. Rather than guess again, pushed stage3/hexdump-anchors.ps1: raw
+  8-aligned qword dump from hit-0x80 to hit+0x88 for each of the 13 anchors,
+  with .rdata pointers annotated by their string and .text pointers flagged.
+  No interpretation to get wrong; the entry layout is read off the bytes.
+- Next owner action: git pull, run stage3\hexdump-anchors.ps1, paste the whole
+  output (it also lands in stage3\analysis\anchor-hexdump.txt).
