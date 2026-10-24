@@ -7240,6 +7240,44 @@
   - https://en.wikipedia.org/wiki/List_of_Yu-Gi-Oh!_video_games
   checked: '2026-10-20'
   made_with_coop_anything: true
+- game: 'Middle-earth: Shadow of Mordor'
+  year: 2014
+  engine: LithTech Jupiter (internal V6)
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope: {}
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: No co-op or multiplayer mod found; the game never shipped real-time multiplayer
+    (Monolith confirmed single-player only, Jan 2014) and its asynchronous online features
+    (Vendettas, leaderboards, Nemesis Forge) went offline 2021-01-12. JustAddMP/ShadowOfMordor
+    is a placeholder repo ("planned", README only, 2026-10-17). Triage and research notes
+    for Steam app 241930 (GOTY) are in games/shadow-of-mordor, including the working modding
+    toolchain (bink2w64.dll proxy injection, Liki-js internal trainer with exe fingerprint
+    check, WarpZephyr's MordorUnpacker/MordorFormats). Sibling game Shadow of War (V7/Firebird)
+    is researched in games/shadow-of-war, claim issue cranebeaker/coop-anything#93.
+  sources:
+  - https://github.com/JustAddMP/ShadowOfMordor
+  - https://www.ign.com/articles/2014/02/03/middle-earth-shadow-of-mordor-wont-have-multiplayer
+  - https://www.pcgamesn.com/middle-earth-shadow-of-mordor/servers-shut-down
+  - https://github.com/Liki-js/shadow-of-mordor-internal-trainer
+  - https://steamdb.info/app/241930/
+  checked: '2026-10-23'
+  searched:
+  - 'Web search (several phrasings: co-op mod, multiplayer mod, coop campaign, online mod)
+    for Shadow of Mordor, 2026-10-23'
+  - 'GitHub repository search "shadow of mordor" / "shadowofmordor" / "mordor coop" / "shadow
+    mordor" / "mordor trainer" (~125 hits read), 2026-10-23'
+  - Nexus mod pages via search results (automated fetch blocked, 403; ~41-44 mods, none co-op),
+    ModDB, r/shadowofmordor and Steam discussions asking for co-op, 2026-10-23
+  - 'Not searched yet: the game''s Discord communities, non-English sources, Archive.org, Steam
+    guides'
 - game: 'Middle-earth: Shadow of War'
   year: 2017
   engine: Firebird (LithTech derivative)
