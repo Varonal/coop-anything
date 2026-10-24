@@ -54,8 +54,12 @@ $br.Close(); $fs.Close()
 
 Write-Host ("machine: 0x{0:X4} (0x8664 = x64)  optMagic: 0x{1:X4} (0x20B = PE32+)" -f $machine, $optMagic)
 Write-Host ("imageBase: 0x{0:X}" -f $imageBase)
-Write-Host "sections:"
-$sections | Format-Table -AutoSize | Out-String -Width 200 | Write-Host
+Write-Host ("sections: {0} (from the PE header)" -f $numSections)
+foreach ($s in $sections) {
+    $n = $s.name
+    if ($n -notmatch '^[\x21-\x7E]+$') { $n = '(non-ascii: ' + (($s.name.ToCharArray() | ForEach-Object { '{0:X2}' -f [byte][char]$_ }) -join ' ') + ')' }
+    Write-Host ("  {0,-10} vaddr {1}  vsize {2,10}  rawSize {3,10}  rawPtr {4}  chars {5}" -f $n, $s.vaddr, $s.vsize, $s.rawSize, $s.rawPtr, $s.characteristics)
+}
 $sections | ConvertTo-Json -Depth 3 | Out-File (Join-Path $OutDir 'sections.json') -Encoding utf8
 
 # --- checks ---

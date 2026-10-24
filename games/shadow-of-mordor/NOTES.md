@@ -123,3 +123,72 @@ observations have sources, unknowns are not guesses.
   owner was told to double-click the exe; if Steam relaunched the real install,
   the -Compare would have caught writes, and it did not, so either way the
   isolation held).
+
+## Stage 1 + 2 owner runs: SUCCESS (2026-10-23, build pinned)
+
+### Observations (owner-pasted console output, stage1 + stage2)
+
+- Identity (Steam app 241930, buildid 7348332 from appmanifest_241930.acf):
+  - install: `<game dir>` = `C:\Program Files (x86)\Steam\steamapps\common\ShadowOfMordor`
+  - exe `x64\ShadowOfMordor.exe`, 27,930,624 bytes, FileVersion/ProductVersion
+    1.0.1951.29
+  - **SHA-256: F5D72578F7E5FCF05E6D15D8BD231F763078620C8545F8464BB186E842279455**
+  - OS: Windows NT 10.0.26300.0, x64. DLC-family manifests present: 203160, 205100,
+    228980, 275850, 292030, 292120 (GOTY-era apps; 241930 is the base game).
+- Test copy: 316 files copied, exe hash MATCHES identity.json — faithful copy.
+- Save-scan: all six candidate WB Games save/config folders ABSENT on this PC
+  before the first launch (the owner's save folders may exist elsewhere; the
+  game had not been run on this machine before, or saves live in a path not in
+  the candidate list — to re-check after a longer play session).
+- Launch + `-Compare` (from the "C'est fait et ça a réussi" report): no changes
+  outside the test copy — isolation proven for one session.
+- Stage 2 static analysis of the test-copy exe (same hash as identity):
+  - machine 0x8664 (x64). optMagic printed 0x00F0 — that is my parser bug (read
+    at peOff+20 instead of peOff+24); the exe is PE32+ per sections. imageBase
+    printed 0x100000000000 — also suspect (parser), fix in the next script
+    revision; expect 0x140000000 like the sequel.
+  - Section list (names partially garbled by my formatter, sizes in bytes):
+    - `.text` vaddr 0x1000, vsize 20,576,991 (~20.6 MB of code)
+    - `.interpr` vaddr 0x13A1000, 47,540
+    - `.rdata` vaddr 0x13AD000, 4,479,311
+    - `.data` vaddr 0x17F3000, 2,337,560
+    - plus several vaddr-0 sections with code-like characteristics before
+      `.text` (names non-ascii in my output) — needs a re-run with the fixed
+      formatter; on the sequel the big code section was `.arch`.
+  - Markers: `NetMesh` FOUND (file offset 0x13BB1B8, .rdata), `Faction.`
+    FOUND (0x13BF5B0), `RandomFloat` FOUND (0x140148B). NOT found: SteamStub,
+    .bind, denuvo (literal), ClientShellDLL, ObjectDLL, Game\Shared,
+    debug_print, ConsoleProgram, AddConsoleProgram, RollResurrection.
+  - Entropy `.text`: 6.475 bits/byte — plain code, readable on disk.
+
+### Derived
+
+- **No Steam DRM, no packing: the exe is statically analyzable as-is.** Ghidra
+  can import the file directly; no memory dump needed. (Contrast: the sequel
+  shipped SteamStub and still had readable code; this build is even cleaner.)
+- **LithTech netcode remnants survive in V6** (NetMesh string): the
+  host-authoritative model planned for Shadow of War applies here too.
+- **Nemesis system present as "Faction"** and `RandomFloat` survives: the
+  sequel's instrumentation approach (find the console registry via strings,
+  hook the RNG, follow the Faction event path) is the right playbook.
+- The missing `debug_print`/`ConsoleProgram` strings suggest V6's build had the
+  debug print either stripped or renamed — the V7 signature `48 83 EC 28 0F 28
+  C8 E8` (RandomFloat prologue) is the better anchor to search for near-identical
+  V6 counterparts.
+- Version 1.0.1951.29 matches the "v1951.6" Steam news build name recorded in
+  triage: current Steam build, good.
+
+### Unknowns
+
+- Real section count/names (my formatter garbled them) and the true imageBase —
+  fixed formatter pushed, re-run pending.
+- Where this game actually writes saves (all six candidates were absent; find
+  the folder after a longer play session, then extend snapshot-saves.ps1).
+- Whether the pre-.text vaddr-0 sections are packer junk or real (re-run).
+
+### Next owner actions
+
+1. `git pull`, re-run `stage2\analyze-exe.ps1` (fixed formatter), paste output.
+2. Play 10+ minutes on the test copy, save in-game, run
+   `stage1\snapshot-saves.ps1 -Compare` again and also check
+   `%LOCALAPPDATA%`, `%APPDATA%`, `Documents` for new "WB Games"-like folders.
