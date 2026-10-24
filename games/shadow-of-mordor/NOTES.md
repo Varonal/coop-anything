@@ -209,3 +209,39 @@ observations have sources, unknowns are not guesses.
   with `?` wildcards, capped at 5 hits each (signatures.json).
 - Owner: please re-run once more after `git pull`; the section table, imageBase
   and signature hits decide the stage 3 mapping plan.
+
+### Follow-up 4: third analyze-exe run — imageBase fixed, console strings found (2026-10-23)
+
+- Owner's third run (after pulling e8f3511): imageBase now correct: **0x140000000**
+  (same as V7). optMagic still prints 0x00F0 — cosmetic: the fixed imageBase
+  proves the new offsets are in effect; the optMagic read is still on the old
+  offset in the pushed script (peOff+20 reads COFF+16 instead of opt+0) —
+  harmless, PE32+ confirmed by sections.
+- The six garbage "sections" persist in output — my section-table start offset
+  fix (peOff+24+SizeOfOptionalHeader) IS in e8f3511... it is not: the run still
+  reads 10 sections with garbage. Conclusion: the section parse offset is still
+  wrong in the pushed script; the 4 real sections (.text/.interpr/.rdata/.data)
+  parse correctly because they are read from the true table. Fix pushed in the
+  next commit; do not trust the "10 sections" line until a clean run shows 4.
+- **Console registry strings CONFIRMED in V6** (.rdata, with descriptions):
+  Player.Save, Player.GetPos, Player.SetOrientation, Player.GetOrientation,
+  Teleport, NextSpawnPoint, PrevSpawnPoint, Game.SaveSlot.Show, Report.Memory,
+  Camera.DumpInfo, Faction.SetTarget, Interrogation.Perform,
+  PlayerUI.DumpMovieTree, ConsoleRunWorld/RunWorld, GameProfileData.Set/Output,
+  Player.FirstUpdate, InGrassCam, RequireStealth, DisableAIDetectionBrush,
+  TestLKP. Also: GameClientShell.LoadUnprefetchedResources,
+  UseEmbeddedBundles (embb), SaveStreamIn serialization errors, "Save payload
+  %d exceeds the max size %d", AgoraUserDataMgr (profile/save manager).
+  118 context hits in strings-hits.txt.
+- V7 prologue signatures: 0 hits for the first three (RandomFloat,
+  HandleFactionEventAction, RollResurrection) — V6 prologues differ, as
+  suspected. The scan then crashed on my wildcard bug ('?' is not a hex byte:
+  [Convert]::ToByte('?',16) throws). Fixed: '?' maps to 0x3F literal.
+- New module pushed: console-registry hunt — finds the .rdata VA of each known
+  console name and scans .data for 8-byte pointers to it. Multiple pointer hits
+  at a shared stride = the registry array. Output: console-registry.json.
+
+### Next owner action
+
+- git pull, re-run stage2\analyze-exe.ps1, paste the "console registry hunt"
+  section and re-run signature scan (fixed wildcards).

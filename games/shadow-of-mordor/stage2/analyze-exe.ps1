@@ -165,7 +165,7 @@ $sigs = @(
 )
 $sigReport = @()
 foreach ($sig in $sigs) {
-    $pattern = $sig.hex -split ' ' | ForEach-Object { [Convert]::ToByte($_, 16) }
+    $pattern = $sig.hex -split ' ' | ForEach-Object { if ($_ -eq '?') { 0x3F } else { [Convert]::ToByte($_, 16) } }
     $hits = @()
     for ($i = 0; $i -le $bytes.Length - $pattern.Count; $i++) {
         $ok = $true
@@ -178,6 +178,51 @@ foreach ($sig in $sigs) {
     Write-Host ('{0,-45} {1} hit(s) {2}' -f $sig.name, $hits.Count, (($hits | ForEach-Object { '0x{0:X}' -f $_ }) -join ' '))
 }
 $sigReport | ConvertTo-Json -Depth 3 | Out-File (Join-Path $OutDir 'signatures.json') -Encoding utf8
+
+
+# --- console registry hunt: find .data pointers to known console-program strings ---
+Write-Host ''
+Write-Host '--- console registry hunt (pointers in .data to console strings) ---'
+# Console program names found by the string scan (V6 build 7348332).
+$consoleNames = @('Player.Save', 'Player.GetPos', 'Player.SetOrientation', 'Teleport', 'NextSpawnPoint', 'PrevSpawnPoint', 'Game.SaveSlot.Show', 'Report.Memory', 'Camera.DumpInfo', 'Faction.SetTarget', 'Interrogation.Perform', 'PlayerUI.DumpMovieTree')
+$dataSec = $sections | Where-Object { $_.name -eq '.data' }
+$rdataSec = $sections | Where-Object { $_.name -eq '.rdata' }
+if ($dataSec -and $rdataSec) {
+    $dataPtr = [Convert]::ToInt64($dataSec.rawPtr, 16)
+    $dataRva = [Convert]::ToInt64($dataSec.vaddr, 16)
+    $rdataPtr = [Convert]::ToInt64($rdataSec.rawPtr, 16)
+    $rdataRva = [Convert]::ToInt64($rdataSec.vaddr, 16)
+    $imageBase64 = [Convert]::ToUInt64($imageBase)
+    $regReport = @()
+    foreach ($name in $consoleNames) {
+        # find the string in .rdata (file bytes), compute its VA
+        $pat = [System.Text.Encoding]::ASCII.GetBytes($name)
+        $strOff = -1
+        for ($i = $rdataPtr; $i -le $rdataPtr + $rdataSec.rawSize - $pat.Length; $i++) {
+            $ok = $true
+            for ($j = 0; $j -lt $pat.Length; $j++) { if ($bytes[$i + $j] -ne $pat[$j]) { $ok = $false; break } }
+            if ($ok -and $bytes[$i + $pat.Length] -eq 0) { $strOff = $i; break }
+        }
+        if ($strOff -lt 0) { Write-Host ("  {0,-24} string not found" -f $name); continue }
+        $strVa = $imageBase64 + [UInt64]($rdataRva + ($strOff - $rdataPtr))
+        $needle = [BitConverter]::GetBytes([UInt64]$strVa)
+        # scan .data for 8-byte pointers to that VA
+        $hits = @()
+        for ($i = $dataPtr; $i -le $dataPtr + $dataSec.rawSize - 8; $i += 4) {
+            $ok = $true
+            for ($j = 0; $j -lt 8; $j++) { if ($bytes[$i + $j] -ne $needle[$j]) { $ok = $false; break } }
+            if ($ok) { $hits += $i; if ($hits.Count -ge 4) { break } }
+        }
+        $hitRvas = ($hits | ForEach-Object { '0x{0:X}' -f ($dataRva + ($_ - $dataPtr)) })
+        $regReport += [pscustomobject]@{ name = $name; str_va = ('0x{0:X}' -f $strVa); ptr_hits = $hits.Count; ptr_rvas = $hitRvas }
+        Write-Host ("  {0,-24} strVA 0x{1:X}  {2} pointer hit(s) in .data {3}" -f $name, $strVa, $hits.Count, ($hitRvas -join ' '))
+    }
+    $regReport | ConvertTo-Json -Depth 3 | Out-File (Join-Path $OutDir 'console-registry.json') -Encoding utf8
+    if (($regReport | Where-Object { $_.ptr_hits -gt 0 }).Count -ge 3) {
+        Write-Host 'Multiple pointer hits: likely the console registry. Adjacent entries share a stride;'
+        Write-Host 'record the .data RVAs - the registry base and entry layout follow from them (stage 3).'
+    }
+}
 Write-Host ''
 Write-Host "analysis written to $OutDir"
 Write-Host 'Paste the console output (and markers.json, sections.json) back to the agent.'
