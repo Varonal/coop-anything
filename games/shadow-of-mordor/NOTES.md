@@ -267,3 +267,12 @@ observations have sources, unknowns are not guesses.
 ### Next owner action
 
 - git pull, run stage3\dump-registry.ps1, paste the entry table.
+
+### Follow-up 6: dump-registry first run — format crash, fixed (2026-10-23)
+
+- Owner ran stage3\dump-registry.ps1: correct preamble (13 anchor hits, lowest
+  0x17F9E58 — includes the second Teleport reference), then crashed at the
+  entry loop: `Spécificateur de format non valide` on `('0x{0:X}' -f $rva)`.
+  Root cause: [Math]::Floor returns a double; PowerShell 5.1's `{0:X}` rejects
+  doubles. Fixed: $spanFirst/$spanLast/$rva cast to [UInt64], $fileOff to [long].
+- Re-run needed; no data lost (crash before any output write).

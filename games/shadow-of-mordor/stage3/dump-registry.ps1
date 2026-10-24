@@ -67,12 +67,12 @@ $hitRvas = $hitRvas | Sort-Object -Unique
 $anchor = $hitRvas[0]
 Write-Host ("{0} anchor pointer hits, lowest 0x{1:X}" -f $hitRvas.Count, $anchor)
 # align down to 0x40 and walk a window of 64 entries before/after the span
-$spanFirst = [Math]::Floor(($hitRvas[0] - 0x400) / 0x40) * 0x40
-$spanLast = $hitRvas[-1] + 0x400
+$spanFirst = [UInt64]([Math]::Floor((([double]$hitRvas[0] - 0x400) / 0x40)) * 0x40)
+$spanLast = [UInt64]($hitRvas[-1] + 0x400)
 
 $entries = @()
-for ($rva = $spanFirst; $rva -le $spanLast; $rva += 0x40) {
-    $fileOff = $rva - $data.vaddr + $data.rawPtr
+for ([UInt64]$rva = $spanFirst; $rva -le $spanLast; $rva += 0x40) {
+    $fileOff = [long]$rva - $data.vaddr + $data.rawPtr
     if ($fileOff -lt 0 -or ($fileOff + 0x40) -gt ($data.rawPtr + $data.rawSize)) { continue }
     # qword 0 = name pointer (verified by the stage-2 hits)
     $nameVa = [BitConverter]::ToUInt64($bytes, $fileOff)
