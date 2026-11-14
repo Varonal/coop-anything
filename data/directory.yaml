@@ -7801,3 +7801,29 @@
   - 'GitHub repository search via the API: the witness multiplayer, witness coop, the witness randomizer, TheWitnessExplorer, witness64_d3d11 (no co-op project), 2026-10-22'
   - 'WebSearch (extended): The Witness Jonathan Blow multiplayer co-op mod; also randomizer / Archipelago client and engine queries (no co-op mod), 2026-10-22'
   - 'Not checked: Nexus Mods, ModDB, Reddit, archive.org, Steam guides in depth, the game or speedrun Discords, non-English communities'
+- game: Professor Layton and the Curious Village
+  year: 2007
+  engine: proprietary Level-5 NDS binary (ARM9/ARM7), closed source
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope: {}
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: Single-player only; the ROM's only wireless mode is Nintendo WFC for weekly puzzle DLC, no local multiplayer. No co-op mod, decomp or PC port found (2026-11-14). Claimed for a shared-instance co-op played from several real DSi consoles (thin clients over Wi-Fi, input up and MJPEG video down); the claim issue could not be opened on this repo from the claimer's account, the draft PR body carries the claim. Write-up and plan in games/professor-layton-curious-village.
+  sources:
+  - https://en.wikipedia.org/wiki/Professor_Layton_and_the_Curious_Village
+  - https://www.gametdb.com/DS/A5FP
+  - https://github.com/gavff64/RNDS-Stream
+  - https://blocksds.skylyrac.net/dswifi/index.html
+  checked: '2026-11-14'
+  searched:
+  - 'Repo DIRECTORY.md, games/, and GitHub issues/PRs searched for "layton" on cranebeaker/coop-anything (nothing), 2026-11-14'
+  - 'WebSearch: "Professor Layton and the Curious Village" co-op multiplayer mod (only ROM sites/reviews), Layton decomp/recomp (none found), 2026-11-14'
+  - 'GitHub repository/topic searches for layton coop / multiplayer (no co-op project), 2026-11-14'
+  - 'Not checked: GBAtemp threads in depth, Reddit, Discord, Japanese-language communities'
