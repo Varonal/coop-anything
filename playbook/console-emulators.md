@@ -20,7 +20,10 @@ Does a PC port / decomp / recomp of the game exist?
            yes -> Route A: emulator netplay (inputs synced). Cheapest.
            no  -> Does the game have an online mode whose servers are dead?
                     yes -> Route C: LAN / private-server revival.
-                    no  -> Route B: memory-sync co-op (two emulators, RAM bridge).
+                    no  -> Does the owner want one game instance controlled by
+                           several console thin clients?
+                            yes -> Route E: shared-emulator streaming.
+                            no  -> Route B: memory-sync co-op (two emulators, RAM bridge).
 Fallback for local co-op games on any emulator: Route D, remote play.
 ```
 
@@ -30,6 +33,7 @@ Fallback for local co-op games on any emulator: Route D, remote play.
 | B. Memory-sync | No | High (per-game RE) | Partial, only what you sync | Determinism, loading, camera, scripts |
 | C. LAN / revival server | Yes (network mode) | Medium | Original online mode | Server trust, DNS, adapter emulation |
 | D. Remote play | Yes (local multiplayer) | Very low | Perfect, but video latency | Input lag, host owns the game |
+| E. Shared-emulator streaming | No | Medium | One authoritative game, shared inputs | Video latency, client decoding, single-player game rules |
 
 ## 2. The generic methods
 
@@ -101,6 +105,36 @@ For games with local co-op where netplay is unavailable (PS2 on PCSX2 is the mai
 - Steam Remote Play Together: host runs the game and streams; guests send controller input; the host alone needs the game; guests see only the game window. Add the emulator as a non-Steam game. Up to four players officially. Needs UDP 27031 and 27036, TCP 27036 and 27037. [Tom's Guide](https://www.tomsguide.com/reference/steam-remote-play-together-how-to-use), [GHacks](https://www.ghacks.net/?p=155430) (2019 launch articles; menu paths may differ).
 - Parsec: same idea, not verified here (no source retrieved). **UNVERIFIED**.
 - Cost: added input latency from video encode and network. Fine for casual co-op, poor for action games over distance.
+
+### 2e. Shared emulator with console thin clients (experimental)
+
+Use this when the owner wants every console to show and control the *same* game
+instance, and the game does not need separate player characters. The emulator on one
+PC is authoritative. A bridge captures its screens and applies complete input
+snapshots; a relay arbitrates inputs and fans out the newest encoded frame to each
+console client. This is shared play through one game controller, not game-side
+multiplayer: it does not create a second avatar, private inventory, or independent
+story progress.
+
+Implementation checks:
+
+1. Prefer emulator APIs for screen capture and input. Keep one reader per client
+   socket and bound the amount of in-flight video; drop stale frames so the client
+   sees the newest screen after a slow decode.
+2. Send complete input snapshots with a heartbeat and stale-input timeout. Give the
+   touchscreen or other exclusive controls to one client at a time; merge only the
+   digital buttons that are safe to combine.
+3. Keep LAN access opt-in and use proper session authentication before exposing the
+   relay beyond loopback. A short session code in plaintext is not authentication.
+4. Bot-test against the actual game: one client action should change the authoritative
+   game state, every client should receive the same captured frame sequence, and a
+   second client should successfully take control afterward. Then test video decode,
+   latency, reconnects, and controller behavior on the target console.
+
+The first evidence is the *Professor Layton and the Curious Village* PC prototype:
+two bots shared a BizHawk 2.11.1 instance, one tapped **New Game**, and the other
+entered a character on the following screen. The test was emulator-only; no DSi client
+or hardware result exists yet. See [the game notes](../games/professor-layton-curious-village/NOTES.md).
 
 ## 3. Per-console table
 
