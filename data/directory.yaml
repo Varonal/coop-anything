@@ -7801,3 +7801,36 @@
   - 'GitHub repository search via the API: the witness multiplayer, witness coop, the witness randomizer, TheWitnessExplorer, witness64_d3d11 (no co-op project), 2026-10-22'
   - 'WebSearch (extended): The Witness Jonathan Blow multiplayer co-op mod; also randomizer / Archipelago client and engine queries (no co-op mod), 2026-10-22'
   - 'Not checked: Nexus Mods, ModDB, Reddit, archive.org, Steam guides in depth, the game or speedrun Discords, non-English communities'
+- game: Professor Layton and the Curious Village
+  year: 2007
+  engine: proprietary Level-5 NDS binary (ARM9/ARM7), closed source
+  project: (none found)
+  url: ''
+  other_urls: []
+  kind: gap
+  status: none
+  coop_scope: {}
+  players: unknown
+  networking: unknown
+  open_source: unknown
+  last_activity: unknown
+  qa: none
+  notes: >-
+    No local multiplayer feature found in the manuals/searches; Nintendo documents WFC weekly puzzle downloads. No co-op mod, decomp or PC port of the original DS build found. A distinct Curious Village Remake is announced for Steam and consoles in 2027. A private prototype passed 34 bot tests and a PC-only BizHawk 2.11.1 smoke test: bot one started a new game, bot two entered a character, and both received byte-identical screens from the shared game instance. No successful DSi network or hardware result exists; write-up and test notes are in games/professor-layton-curious-village.
+  sources:
+  - https://en.wikipedia.org/wiki/Professor_Layton_and_the_Curious_Village
+  - https://www.gametdb.com/DS/A5FP
+  - https://www.nintendo.com/fr-fr/Jeux/Nintendo-DS/Professeur-Layton-et-l-etrange-village-272563.html
+  - https://www.layton.jp/fushigi-remake/en/
+  - https://www.jeuxactu.com/test-pr-layton-et-l-etrange-village-29398.htm
+  - https://github.com/gavff64/RNDS-Stream
+  - https://blocksds.skylyrac.net/dswifi/index.html
+  - https://github.com/TASEmulators/BizHawk/releases/tag/2.11.1
+  - https://tasvideos.org/Bizhawk/LuaFunctions
+  - https://github.com/TASEmulators/BizHawk/issues/4535
+  checked: '2026-11-14'
+  searched:
+  - 'Repo DIRECTORY.md, games/, and GitHub issues/PRs searched for "layton" on cranebeaker/coop-anything (nothing), 2026-11-14'
+  - 'WebSearch: English, French, and Japanese queries for Curious Village co-op, multiplayer, and A5FP ROM projects (no co-op project found); surfaced the 2027 official remake, 2026-11-14'
+  - 'GitHub repository/topic searches for layton coop / multiplayer (no co-op project); public draft PR #3 reviewed, 2026-11-14'
+  - 'Not checked: GBAtemp threads in depth, Reddit, Discord, Japanese-language communities'
